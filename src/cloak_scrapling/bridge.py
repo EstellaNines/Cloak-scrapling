@@ -16,6 +16,7 @@ from .runtime import (
     prepare_local_sources,
     wait_for_cdp_ws_url,
 )
+from .scraping import fetch_page, mcp_stealthy_fetch
 
 
 @dataclass(slots=True)
@@ -114,18 +115,12 @@ class CloakScraplingBridge:
     async def fetch(self, url: str, **kwargs: Any) -> Any:
         if not self.cdp_url:
             raise RuntimeError("Bridge is not started. Use 'async with CloakScraplingBridge()'.")
-        prepare_local_sources()
-        from scrapling.fetchers import StealthyFetcher
-
-        kwargs.setdefault("google_search", False)
-        self.console.log("input", "direct fetch requested", url=url, options=kwargs)
-        try:
-            page = await StealthyFetcher.async_fetch(url, cdp_url=self.cdp_url, **kwargs)
-            self.console.log("output", "direct fetch completed", **_summarize_page(page))
-            return page
-        except Exception as exc:
-            self.console.log("error", "direct fetch failed", url=url, error=repr(exc))
-            raise
+        return await fetch_page(
+            self.cdp_url,
+            url,
+            console=self.console,
+            **kwargs,
+        )
 
     async def ensure_controller(self) -> BrowserController:
         if not self.cdp_url:
@@ -142,43 +137,9 @@ class CloakScraplingBridge:
     async def mcp_stealthy_fetch(self, url: str, **kwargs: Any) -> Any:
         if not self.cdp_url:
             raise RuntimeError("Bridge is not started. Use 'async with CloakScraplingBridge()'.")
-        prepare_local_sources()
-        from scrapling.core.ai import ScraplingMCPServer
-
-        kwargs.setdefault("google_search", False)
-        server = ScraplingMCPServer()
-        self.console.log("input", "MCP stealthy_fetch requested", url=url, options=kwargs)
-        try:
-            result = await server.stealthy_fetch(url, cdp_url=self.cdp_url, **kwargs)
-            self.console.log("mcp", "MCP stealthy_fetch completed", **_summarize_mcp_result(result))
-            return result
-        except Exception as exc:
-            self.console.log("error", "MCP stealthy_fetch failed", url=url, error=repr(exc))
-            raise
-
-
-def _summarize_page(page: Any) -> dict[str, Any]:
-    title = None
-    try:
-        title = page.css("title::text").get()
-    except Exception:
-        title = None
-    text = getattr(page, "text", "") or ""
-    return {
-        "status": getattr(page, "status", None),
-        "url": getattr(page, "url", None),
-        "title": title,
-        "text_len": len(text),
-        "preview": text[:160].replace("\n", " "),
-    }
-
-
-def _summarize_mcp_result(result: Any) -> dict[str, Any]:
-    content = getattr(result, "content", []) or []
-    joined = " ".join(str(item).strip() for item in content if str(item).strip())
-    return {
-        "status": getattr(result, "status", None),
-        "url": getattr(result, "url", None),
-        "items": len(content),
-        "preview": joined[:200].replace("\n", " "),
-    }
+        return await mcp_stealthy_fetch(
+            self.cdp_url,
+            url,
+            console=self.console,
+            **kwargs,
+        )
