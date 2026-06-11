@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from .browser_models import BrowserElement, BrowserState
 
 
 INTERACTIVE_SELECTOR = ", ".join(
@@ -47,57 +48,6 @@ element => {
   return { tag, text, attrs, visible };
 }
 """
-
-
-@dataclass(slots=True)
-class BrowserElement:
-    index: int
-    tag: str
-    text: str = ""
-    attributes: dict[str, str] = field(default_factory=dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "index": self.index,
-            "tag": self.tag,
-            "text": self.text,
-            "attributes": dict(self.attributes),
-        }
-
-    def to_text(self) -> str:
-        attrs = " ".join(
-            f'{name}="{_quote(value)}"'
-            for name, value in self.attributes.items()
-            if value
-        )
-        open_tag = f"[{self.index}]<{self.tag}"
-        if attrs:
-            open_tag = f"{open_tag} {attrs}"
-        if self.text:
-            return f"{open_tag}>{_quote(self.text)}</{self.tag}>"
-        return f"{open_tag} />"
-
-
-@dataclass(slots=True)
-class BrowserState:
-    url: str
-    title: str
-    elements: list[BrowserElement]
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "url": self.url,
-            "title": self.title,
-            "elements": [element.to_dict() for element in self.elements],
-            "text": self.to_text(),
-        }
-
-    def to_text(self) -> str:
-        lines = [f"url={self.url}", f"title={self.title}"]
-        if self.elements:
-            lines.append("")
-            lines.extend(element.to_text() for element in self.elements)
-        return "\n".join(lines)
 
 
 class BrowserController:
@@ -284,7 +234,3 @@ async def _dispose(handle: Any) -> None:
         await handle.dispose()
     except Exception:
         pass
-
-
-def _quote(value: str) -> str:
-    return value.replace("\n", " ").replace('"', "&quot;").strip()
