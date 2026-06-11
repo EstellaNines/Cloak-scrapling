@@ -69,11 +69,7 @@ class AgentCliApp:
             await self.close()
             return AgentCommandResult.single("system", "exiting", should_exit=True)
         if command.name in {"close", "restart"}:
-            return AgentCommandResult.single(
-                "system",
-                f"/{command.name} requires confirmation; confirmation wiring comes next",
-                status=self.status,
-            )
+            return await self.dispatch_confirmed_lifecycle(command.name)
 
         try:
             return await self.dispatch_session_command(command.name, command.args)
@@ -187,6 +183,15 @@ class AgentCliApp:
         await self.session.start()
         return self.session
 
+    async def dispatch_confirmed_lifecycle(self, name: str) -> AgentCommandResult:
+        confirmed = self.args.yes or await asyncio.to_thread(self._confirm, name)
+        if not confirmed:
+            return AgentCommandResult.single("system", f"/{name} canceled", status=self.status)
+
+        await self.close()
+        message = "browser session closed" if name == "close" else "browser session reset"
+        return AgentCommandResult.single("system", message, status=self.status)
+
     async def refresh_status(self) -> AgentStatus:
         if self.session is not None:
             info = self.session.browser_core_info
@@ -212,6 +217,11 @@ class AgentCliApp:
                 completer=WordCompleter(commands, ignore_case=True),
             )
         return self._prompt_session.prompt("cloak> ")
+
+    @staticmethod
+    def _confirm(name: str) -> bool:
+        answer = input(f"Confirm /{name}? [y/N] ").strip().lower()
+        return answer in {"y", "yes"}
 
     async def run_once(self, line: str) -> int:
         result = await self.dispatch(line)
@@ -265,6 +275,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--once",
         help="Run one command and exit. Useful for smoke tests.",
+    )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Confirm lifecycle commands such as /close and /restart.",
     )
     return parser
 
