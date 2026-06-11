@@ -90,6 +90,18 @@ class AgentCliParserTests(unittest.TestCase):
 
 
 class AgentCliRendererTests(unittest.TestCase):
+    def test_plain_renderer_outputs_brand_banner(self) -> None:
+        renderer = AgentCliRenderer()
+        renderer._rich_available = False
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            renderer.render_banner()
+
+        printed = output.getvalue()
+        self.assertIn("◈ Cloak Scrapling", printed)
+        self.assertIn("Agent CLI / browser control / scraping", printed)
+
     def test_plain_renderer_outputs_event_and_status(self) -> None:
         renderer = AgentCliRenderer()
         renderer._rich_available = False

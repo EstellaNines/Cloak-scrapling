@@ -16,6 +16,10 @@ EVENT_STYLES: dict[str, str] = {
     "result": "green",
 }
 
+BRAND_ICON = "◈"
+BRAND_WORDMARK = "Cloak Scrapling"
+BRAND_SUBTITLE = "Agent CLI / browser control / scraping"
+
 
 class AgentCliRenderer:
     """Render Agent CLI events with Rich when available and plain text otherwise."""
@@ -35,7 +39,12 @@ class AgentCliRenderer:
             self.console = None
 
     def render_banner(self) -> None:
-        self._print("Cloak-scrapling Agent CLI", style="bold")
+        if self._rich_available:
+            self._render_rich_banner()
+            return
+
+        self._print(f"{BRAND_ICON} {BRAND_WORDMARK}", style="bold")
+        self._print(f"  {BRAND_SUBTITLE}", style="dim")
         self._print("Type /help for commands, /exit to quit.", style="dim")
 
     def render_events(self, events: Iterable[AgentEvent]) -> None:
@@ -72,3 +81,25 @@ class AgentCliRenderer:
             self.console.print(message, style=style)
             return
         print(message)
+
+    def _render_rich_banner(self) -> None:
+        from rich import box
+        from rich.panel import Panel
+        from rich.text import Text
+
+        brand = Text()
+        brand.append(BRAND_ICON, style="bold cyan")
+        brand.append("  ")
+        brand.append(BRAND_WORDMARK, style="bold white")
+        brand.append("\n")
+        brand.append(BRAND_SUBTITLE, style="dim cyan")
+
+        self.console.print(
+            Panel.fit(
+                brand,
+                border_style="cyan",
+                box=box.ROUNDED,
+                padding=(1, 2),
+            )
+        )
+        self._print("Type /help for commands, /exit to quit.", style="dim")
