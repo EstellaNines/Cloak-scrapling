@@ -50,7 +50,9 @@ dependencies = [
     "orjson>=3.11.8",
     "patchright==1.60.1",
     "playwright==1.60.0",
+    "prompt_toolkit>=3.0.52",
     "protego>=0.6.0",
+    "rich>=14.0.0",
     "tld>=0.13.2",
     "typing_extensions",
     "w3lib>=2.4.1",
@@ -66,6 +68,7 @@ dev = [
 [project.scripts]
 cloak-scrapling-fetch = "cloak_scrapling.cli:main"
 cloak-scrapling-shell = "cloak_scrapling.interactive:main"
+cloak-scrapling-agent = "cloak_scrapling.agent_cli:main"
 cloak-scrapling-mcp = "cloak_scrapling.mcp_server:main"
 cloak-scrapling-browser = "cloak_scrapling.browser_core_cli:main"
 cloak-scrapling-install-skill = "cloak_scrapling.install_skill:main"
