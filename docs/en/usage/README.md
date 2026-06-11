@@ -36,6 +36,15 @@ Enable sidecar console:
 cloak-scrapling-fetch https://example.com --selector "title::text" --console
 ```
 
+## Browser core management
+
+```powershell
+cloak-scrapling-browser info
+cloak-scrapling-browser info --json
+cloak-scrapling-browser install
+cloak-scrapling-browser clear-cache
+```
+
 ## Interactive shell
 
 ```powershell
@@ -46,6 +55,14 @@ Common commands:
 
 ```text
 help
+open https://example.com
+state
+input 2 hello
+click 3
+scroll down
+screenshot .logs/example.png
+text body
+html main
 fetch https://example.com title::text
 mcp https://example.com body
 console on
@@ -57,6 +74,8 @@ restart
 close
 exit
 ```
+
+Interaction mode reuses the current CloakBrowser session. `state` returns indexed elements for the current page; run `state` again after page changes to refresh indexes.
 
 ## Python API
 
@@ -101,6 +120,10 @@ asyncio.run(main())
 | `CLOAK_SCRAPLING_LOG_DIR` | JSONL log directory. |
 | `CLOAKBROWSER_BINARY_PATH` | Use an existing browser executable. |
 | `CLOAKBROWSER_DOWNLOAD_URL` | Use an internal browser download mirror. |
+| `CLOAK_SCRAPLING_VENDOR_BROWSER_DIR` | Override the bundled browser-core directory. |
+| `CLOAK_SCRAPLING_USE_LOCAL_SOURCES=1` | Use local checkouts instead of vendored sources during development. |
+| `CLOAKBROWSER_SOURCE_DIR` | Local CloakBrowser source directory, only used with local source override. |
+| `SCRAPLING_SOURCE_DIR` | Local Scrapling source directory, only used with local source override. |
 
 Windows example:
 

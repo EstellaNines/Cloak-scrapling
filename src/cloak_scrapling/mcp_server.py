@@ -25,6 +25,10 @@ class CloakScraplingMCPServer:
         await self.bridge.start()
         return self.bridge
 
+    async def _ensure_controller(self) -> Any:
+        bridge = await self._ensure_bridge()
+        return await bridge.ensure_controller()
+
     async def status(self) -> dict[str, Any]:
         """Return the current CloakBrowser/Scrapling bridge status."""
         return {
@@ -60,6 +64,51 @@ class CloakScraplingMCPServer:
             return result.model_dump()
         return {"status": result.status, "url": result.url, "content": result.content}
 
+    async def open(self, url: str, timeout: int | float = 30000) -> dict[str, Any]:
+        """Open a URL in the live browser page."""
+        controller = await self._ensure_controller()
+        return await controller.open_url(url, timeout=timeout)
+
+    async def state(self) -> dict[str, Any]:
+        """Return indexed interactive elements for the current page."""
+        controller = await self._ensure_controller()
+        return (await controller.state()).to_dict()
+
+    async def click(self, index: int) -> dict[str, Any]:
+        """Click an element from the latest state result by index."""
+        controller = await self._ensure_controller()
+        return await controller.click(index)
+
+    async def input(self, index: int, text: str) -> dict[str, Any]:
+        """Fill an element from the latest state result by index."""
+        controller = await self._ensure_controller()
+        return await controller.input_text(index, text)
+
+    async def press(self, key: str) -> dict[str, Any]:
+        """Send a keyboard key to the current page."""
+        controller = await self._ensure_controller()
+        return await controller.press(key)
+
+    async def scroll(self, direction: str) -> dict[str, Any]:
+        """Scroll the current page up or down."""
+        controller = await self._ensure_controller()
+        return await controller.scroll(direction)
+
+    async def screenshot(self, path: str | None = None) -> dict[str, Any]:
+        """Save a full-page screenshot."""
+        controller = await self._ensure_controller()
+        return await controller.screenshot(path)
+
+    async def get_text(self, selector: str | None = None) -> dict[str, Any]:
+        """Return text from the page or a CSS selector."""
+        controller = await self._ensure_controller()
+        return {"content": await controller.get_text(selector)}
+
+    async def get_html(self, selector: str | None = None) -> dict[str, Any]:
+        """Return HTML from the page or a CSS selector."""
+        controller = await self._ensure_controller()
+        return {"content": await controller.get_html(selector)}
+
     async def close_browser(self) -> dict[str, Any]:
         """Close the current CloakBrowser browser session."""
         if self.bridge is not None:
@@ -75,6 +124,15 @@ class CloakScraplingMCPServer:
     def register(self, server: FastMCP) -> None:
         server.add_tool(self.status, title="status", structured_output=True)
         server.add_tool(self.fetch, title="fetch", structured_output=True)
+        server.add_tool(self.open, title="open", structured_output=True)
+        server.add_tool(self.state, title="state", structured_output=True)
+        server.add_tool(self.click, title="click", structured_output=True)
+        server.add_tool(self.input, title="input", structured_output=True)
+        server.add_tool(self.press, title="press", structured_output=True)
+        server.add_tool(self.scroll, title="scroll", structured_output=True)
+        server.add_tool(self.screenshot, title="screenshot", structured_output=True)
+        server.add_tool(self.get_text, title="get_text", structured_output=True)
+        server.add_tool(self.get_html, title="get_html", structured_output=True)
         server.add_tool(self.close_browser, title="close_browser", structured_output=True)
         server.add_tool(self.reset_browser, title="reset_browser", structured_output=True)
 

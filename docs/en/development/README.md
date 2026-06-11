@@ -3,11 +3,14 @@
 ## Tests
 
 ```powershell
+python -m unittest tests.test_browser_core tests.test_browser_core_cli -v
+python -m unittest tests.test_vendored_sources -v
 python scripts\smoke.py
 python scripts\mcp_smoke.py
 python scripts\cli_smoke.py
 python scripts\package_mcp_smoke.py
 python scripts\interactive_smoke.py
+python scripts\interaction_smoke.py
 python scripts\installed_shell_smoke.py
 ```
 
@@ -24,6 +27,13 @@ Visible console smoke:
 python -m twine check dist\*
 ```
 
+The vendored source check verifies that:
+
+- `scrapling` and `cloakbrowser` resolve from this repository's `src/` tree.
+- `cloak-scrapling-browser` exposes the browser core resolution and management flow.
+- `pyproject.toml` no longer depends on external `scrapling[all]` or `cloakbrowser` packages.
+- `third_party_licenses/` keeps upstream license notices.
+
 ## Security notes
 
 - Do not expose `cloak-scrapling-mcp --http --host 0.0.0.0` to untrusted networks.
@@ -35,6 +45,8 @@ python -m twine check dist\*
 
 - Default logs go to a user cache directory.
 - Adjacent source override is disabled by default.
+- Browser core resolution prefers `CLOAKBROWSER_BINARY_PATH`, then `vendor_browser/`, then cache.
+- Vendored upstream sources keep third-party license files.
 - Skill installer validates target paths and refuses symlink replacement.
 - Sidecar console does not use `shell=True`.
 - Build script cleans old artifacts before packaging.

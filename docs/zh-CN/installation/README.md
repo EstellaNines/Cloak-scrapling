@@ -6,6 +6,8 @@
 python -m pip install cloak-scrapling
 ```
 
+安装包内置 `cloakbrowser` 与 `scrapling` 的 Python 源码，不需要再单独安装这两个上游包。安装过程仍会拉取 `httpx`、`playwright`、`lxml`、`curl_cffi` 等三方运行依赖。
+
 如果使用 `pipx`：
 
 ```powershell
@@ -22,7 +24,7 @@ uv tool install cloak-scrapling
 
 ```powershell
 cd F:\Workbench\EmptySpace\Tool\Cloak-scrapling
-python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.0-py3-none-any.whl
+python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.1-py3-none-any.whl
 ```
 
 ## 源码安装
@@ -55,8 +57,8 @@ python -m pip install -e ".[dev]"
 产物：
 
 ```text
-dist/cloak_scrapling-0.1.0-py3-none-any.whl
-dist/cloak_scrapling-0.1.0.tar.gz
+dist/cloak_scrapling-0.1.1-py3-none-any.whl
+dist/cloak_scrapling-0.1.1.tar.gz
 ```
 
 检查：
@@ -81,5 +83,8 @@ python -m twine check dist\*
 cloak-scrapling-fetch --help
 cloak-scrapling-shell --help
 cloak-scrapling-mcp --help
+cloak-scrapling-browser --help
 cloak-scrapling-install-skill --help
+cloakbrowser --help
+scrapling --help
 ```

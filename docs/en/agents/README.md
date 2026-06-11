@@ -39,6 +39,7 @@ CLOAK_SCRAPLING_CONSOLE = "1"
 CLOAK_SCRAPLING_CONSOLE_HOLD = "1"
 CLOAK_SCRAPLING_CACHE_DIR = "D:/Cache/cloak-scrapling/browser"
 CLOAK_SCRAPLING_LOG_DIR = "D:/Cache/cloak-scrapling/logs"
+CLOAK_SCRAPLING_VENDOR_BROWSER_DIR = "D:/Cache/cloak-scrapling/vendor_browser"
 ```
 
 ## Claude Code / Claude Desktop

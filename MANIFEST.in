@@ -6,6 +6,7 @@ include src/cloak_scrapling/py.typed
 recursive-include src/cloak_scrapling/agent_skill *.md
 recursive-include docs *.md *.svg
 recursive-include scripts *.py *.ps1
+recursive-include vendor_browser *
 
 prune .cloakbrowser-cache
 prune .logs

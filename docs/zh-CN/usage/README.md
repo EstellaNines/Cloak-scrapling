@@ -36,6 +36,15 @@ cloak-scrapling-fetch https://example.com --headful
 cloak-scrapling-fetch https://example.com --selector "title::text" --console
 ```
 
+## 浏览器核心管理
+
+```powershell
+cloak-scrapling-browser info
+cloak-scrapling-browser info --json
+cloak-scrapling-browser install
+cloak-scrapling-browser clear-cache
+```
+
 ## 交互式 Shell
 
 ```powershell
@@ -46,6 +55,14 @@ cloak-scrapling-shell --lang zh
 
 ```text
 help
+open https://example.com
+state
+input 2 hello
+click 3
+scroll down
+screenshot .logs/example.png
+text body
+html main
 fetch https://example.com title::text
 mcp https://example.com body
 console on
@@ -57,6 +74,8 @@ restart
 close
 exit
 ```
+
+交互模式会复用当前 CloakBrowser 会话。`state` 会返回当前页面可操作元素编号；页面变化后需要重新运行 `state` 刷新编号。
 
 ## Python API
 
@@ -101,6 +120,10 @@ asyncio.run(main())
 | `CLOAK_SCRAPLING_LOG_DIR` | JSONL 日志目录。 |
 | `CLOAKBROWSER_BINARY_PATH` | 使用已有浏览器可执行文件。 |
 | `CLOAKBROWSER_DOWNLOAD_URL` | 使用内部浏览器下载镜像。 |
+| `CLOAK_SCRAPLING_VENDOR_BROWSER_DIR` | 覆盖随包浏览器核心目录。 |
+| `CLOAK_SCRAPLING_USE_LOCAL_SOURCES=1` | 开发时用本地 checkout 覆盖内置源码。 |
+| `CLOAKBROWSER_SOURCE_DIR` | CloakBrowser 本地源码目录，仅在启用本地覆盖时生效。 |
+| `SCRAPLING_SOURCE_DIR` | Scrapling 本地源码目录，仅在启用本地覆盖时生效。 |
 
 Windows 示例：
 

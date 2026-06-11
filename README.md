@@ -8,11 +8,12 @@
 
 ## 功能概览
 
-- **MCP Server**：提供 `fetch`、`status`、`close_browser`、`reset_browser`。
+- **MCP Server**：提供网页抓取、页面打开、元素状态、点击、输入、截图和浏览器生命周期工具。
 - **CLI 抓取**：通过 `cloak-scrapling-fetch` 执行一次性抓取。
-- **交互式 Shell**：通过 `cloak-scrapling-shell` 使用中英文交互式爬虫命令。
+- **交互式 Shell**：通过 `cloak-scrapling-shell` 使用中英文抽取命令与页面交互命令。
 - **Agent Skill**：通过 `cloak-scrapling-install-skill` 安装到 Codex / Claude。
-- **CloakBrowser + Scrapling**：自动启动浏览器、解析 CDP WebSocket，并返回 `text` / `html` / `markdown`。
+- **内置 CloakBrowser + Scrapling 源码**：随包发布两者 Python 源码，自动启动浏览器、解析 CDP WebSocket，并返回 `text` / `html` / `markdown`。
+- **BrowserAct-like 浏览器核心管理**：通过 `cloak-scrapling-browser` 查看、安装、清理当前平台浏览器核心。
 - **Sidecar Console**：可选显示彩色输入输出日志。
 
 ## 快速开始
@@ -22,10 +23,12 @@ python -m pip install cloak-scrapling
 cloak-scrapling-fetch https://example.com --selector "title::text"
 ```
 
+`cloakbrowser` 与 `scrapling` 的 Python 源码已内置到本包中；浏览器核心按 `CLOAKBROWSER_BINARY_PATH`、`vendor_browser/<platform>/`、CloakBrowser 缓存、下载安装的顺序解析。
+
 本地 wheel 安装：
 
 ```powershell
-python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.0-py3-none-any.whl
+python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.1-py3-none-any.whl
 ```
 
 ## 文档
@@ -38,6 +41,7 @@ python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.0-py3-none-an
 | [AI Agent 接入](docs/zh-CN/agents/README.md) | Codex、Claude、Cursor、Windsurf、Cline/Roo Code 配置。 |
 | [开发与安全](docs/zh-CN/development/README.md) | 测试、打包检查、安全注意事项。 |
 | [架构说明](docs/architecture.md) | 桥接链路与实现结构。 |
+| [第三方源码](THIRD_PARTY_SOURCES.md) | 内置 Scrapling / CloakBrowser 来源、提交与许可证。 |
 
 ## 命令
 
@@ -45,7 +49,24 @@ python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.0-py3-none-an
 cloak-scrapling-fetch --help
 cloak-scrapling-shell --help
 cloak-scrapling-mcp --help
+cloak-scrapling-browser --help
 cloak-scrapling-install-skill --help
+cloakbrowser --help
+scrapling --help
+```
+
+交互式页面操作：
+
+```powershell
+cloak-scrapling-shell --lang zh
+```
+
+```text
+open https://example.com
+state
+input 2 hello
+click 3
+text body
 ```
 
 ## 基本 MCP 配置
@@ -68,7 +89,7 @@ args = ["-m", "cloak_scrapling.mcp_server"]
 
 ## 状态
 
-当前项目已完成 wheel / sdist 打包，并通过：
+当前项目包含 `cloak_scrapling`、`cloakbrowser` 与 `scrapling` 三组 Python 包，已完成 wheel / sdist 打包，并通过：
 
 ```powershell
 python -m twine check dist\*
@@ -76,4 +97,9 @@ python -m twine check dist\*
 
 ## 许可证
 
-MIT License。见 [LICENSE](LICENSE)。
+本项目主体为 MIT License。见 [LICENSE](LICENSE)。
+
+内置上游源码保留原许可证声明：
+
+- Scrapling：BSD-3-Clause，见 [SCRAPLING-BSD-3-CLAUSE.txt](third_party_licenses/SCRAPLING-BSD-3-CLAUSE.txt)。
+- CloakBrowser：MIT，见 [CLOAKBROWSER-MIT.txt](third_party_licenses/CLOAKBROWSER-MIT.txt)。

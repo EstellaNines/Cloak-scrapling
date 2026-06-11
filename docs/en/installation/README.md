@@ -6,6 +6,11 @@
 python -m pip install cloak-scrapling
 ```
 
+The package bundles the Python sources for `cloakbrowser` and `scrapling`, so
+those upstream packages do not need to be installed separately. Third-party
+runtime dependencies such as `httpx`, `playwright`, `lxml`, and `curl_cffi` are
+still installed normally.
+
 With `pipx`:
 
 ```powershell
@@ -22,7 +27,7 @@ uv tool install cloak-scrapling
 
 ```powershell
 cd F:\Workbench\EmptySpace\Tool\Cloak-scrapling
-python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.0-py3-none-any.whl
+python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.1-py3-none-any.whl
 ```
 
 ## Source install
@@ -55,8 +60,8 @@ Recommended:
 Artifacts:
 
 ```text
-dist/cloak_scrapling-0.1.0-py3-none-any.whl
-dist/cloak_scrapling-0.1.0.tar.gz
+dist/cloak_scrapling-0.1.1-py3-none-any.whl
+dist/cloak_scrapling-0.1.1.tar.gz
 ```
 
 Check:
@@ -81,5 +86,8 @@ For isolated PEP 517 builds:
 cloak-scrapling-fetch --help
 cloak-scrapling-shell --help
 cloak-scrapling-mcp --help
+cloak-scrapling-browser --help
 cloak-scrapling-install-skill --help
+cloakbrowser --help
+scrapling --help
 ```

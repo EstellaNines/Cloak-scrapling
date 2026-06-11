@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cloak-scrapling"
-version = "0.1.0"
+version = "0.1.1"
 description = "One-command CloakBrowser + Scrapling integration for AI Agent scraping."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "third_party_licenses/*"]
 authors = [
     { name = "Cloak-scrapling contributors" },
 ]
@@ -35,9 +35,25 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "cloakbrowser>=0.3.30",
-    "scrapling[all]>=0.4.8",
+    "apify-fingerprint-datapoints>=0.13.0",
+    "anyio>=4.13.0",
+    "browserforge>=1.2.4",
+    "click>=8.3.0",
+    "cssselect>=1.4.0",
+    "curl_cffi>=0.15.0",
+    "httpx>=0.24",
+    "IPython>=8.37",
+    "lxml>=6.1.1",
+    "markdownify>=1.2.0",
     "mcp>=1.27.0",
+    "msgspec>=0.21.1",
+    "orjson>=3.11.8",
+    "patchright==1.60.1",
+    "playwright==1.60.0",
+    "protego>=0.6.0",
+    "tld>=0.13.2",
+    "typing_extensions",
+    "w3lib>=2.4.1",
 ]
 
 [project.optional-dependencies]
@@ -51,7 +67,10 @@ dev = [
 cloak-scrapling-fetch = "cloak_scrapling.cli:main"
 cloak-scrapling-shell = "cloak_scrapling.interactive:main"
 cloak-scrapling-mcp = "cloak_scrapling.mcp_server:main"
+cloak-scrapling-browser = "cloak_scrapling.browser_core_cli:main"
 cloak-scrapling-install-skill = "cloak_scrapling.install_skill:main"
+cloakbrowser = "cloakbrowser.__main__:main"
+scrapling = "scrapling.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -61,3 +80,4 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 cloak_scrapling = ["agent_skill/SKILL.md", "py.typed"]
+scrapling = ["py.typed"]

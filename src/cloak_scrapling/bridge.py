@@ -12,6 +12,8 @@ from typing import Any
 from urllib.request import urlopen
 
 from .agent_console import AgentConsole
+from .browser_core import BrowserCoreResolver
+from .browser_controller import BrowserController
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -97,6 +99,7 @@ class CloakScraplingBridge:
         self.config = config or CloakScraplingConfig()
         self.browser: Any | None = None
         self.cdp_url: str | None = None
+        self.controller: BrowserController | None = None
         self.console = AgentConsole(
             enabled=self.config.console,
             title=self.config.console_title,
@@ -114,6 +117,15 @@ class CloakScraplingBridge:
     async def start(self) -> str:
         self.console.start()
         prepare_local_sources()
+        browser_core = BrowserCoreResolver()
+        browser_core_info = browser_core.resolve()
+        browser_core.apply_to_environment(browser_core_info)
+        self.console.log(
+            "browser_core",
+            "browser core resolved",
+            browser_core_provider=browser_core_info.provider,
+            browser_core_path=browser_core_info.binary_path,
+        )
         from cloakbrowser import launch_async
 
         port = self.config.cdp_port or find_free_port(self.config.cdp_host)
@@ -148,6 +160,9 @@ class CloakScraplingBridge:
     async def close(self) -> None:
         self.console.log("system", "closing bridge")
         try:
+            if self.controller is not None:
+                await self.controller.close()
+                self.controller = None
             if self.browser is not None:
                 await self.browser.close()
                 self.browser = None
@@ -170,6 +185,18 @@ class CloakScraplingBridge:
         except Exception as exc:
             self.console.log("error", "direct fetch failed", url=url, error=repr(exc))
             raise
+
+    async def ensure_controller(self) -> BrowserController:
+        if not self.cdp_url:
+            await self.start()
+        if not self.cdp_url:
+            raise RuntimeError("CloakBrowser CDP endpoint is not ready.")
+        if self.controller is None or self.controller.cdp_url != self.cdp_url:
+            self.controller = BrowserController(
+                self.cdp_url,
+                default_screenshot_dir=PROJECT_ROOT / ".logs",
+            )
+        return self.controller
 
     async def mcp_stealthy_fetch(self, url: str, **kwargs: Any) -> Any:
         if not self.cdp_url:
