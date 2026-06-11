@@ -26,8 +26,10 @@ sys.modules.setdefault("mcp.server.fastmcp", fastmcp_module)
 from cloak_scrapling.mcp_server import CloakScraplingMCPServer
 
 
-class FakeController:
-    async def open_url(self, url: str, **kwargs: object) -> dict[str, object]:
+class FakeSession:
+    cdp_url = "ws://127.0.0.1/devtools/browser/test"
+
+    async def open(self, url: str, **kwargs: object) -> dict[str, object]:
         return {"status": 200, "url": url, "title": "Fake"}
 
     async def state(self) -> BrowserState:
@@ -40,7 +42,7 @@ class FakeController:
     async def click(self, index: int) -> dict[str, object]:
         return {"clicked": index}
 
-    async def input_text(self, index: int, text: str) -> dict[str, object]:
+    async def input(self, index: int, text: str) -> dict[str, object]:
         return {"input": index, "text_length": len(text)}
 
     async def press(self, key: str) -> dict[str, object]:
@@ -59,17 +61,10 @@ class FakeController:
         return f"<div>{selector or 'body'}</div>"
 
 
-class FakeBridge:
-    cdp_url = "ws://127.0.0.1/devtools/browser/test"
-
-    async def ensure_controller(self) -> FakeController:
-        return FakeController()
-
-
 class MCPInteractionToolTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.server = CloakScraplingMCPServer()
-        self.server.bridge = FakeBridge()  # type: ignore[assignment]
+        self.server.session = FakeSession()  # type: ignore[assignment]
 
     async def test_open_and_state_return_structured_results(self) -> None:
         opened = await self.server.open("https://example.test")

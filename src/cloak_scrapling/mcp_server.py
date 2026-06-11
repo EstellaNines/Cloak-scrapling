@@ -7,7 +7,8 @@ from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 
-from .bridge import CloakScraplingBridge, CloakScraplingConfig
+from .bridge import CloakScraplingConfig
+from .session import CloakScraplingSession
 
 
 ExtractionType = Literal["markdown", "html", "text"]
@@ -16,24 +17,20 @@ ExtractionType = Literal["markdown", "html", "text"]
 class CloakScraplingMCPServer:
     def __init__(self, config: CloakScraplingConfig | None = None) -> None:
         self.config = config or CloakScraplingConfig()
-        self.bridge: CloakScraplingBridge | None = None
+        self.session: CloakScraplingSession | None = None
 
-    async def _ensure_bridge(self) -> CloakScraplingBridge:
-        if self.bridge and self.bridge.cdp_url:
-            return self.bridge
-        self.bridge = CloakScraplingBridge(self.config)
-        await self.bridge.start()
-        return self.bridge
-
-    async def _ensure_controller(self) -> Any:
-        bridge = await self._ensure_bridge()
-        return await bridge.ensure_controller()
+    async def _ensure_session(self) -> CloakScraplingSession:
+        if self.session and self.session.cdp_url:
+            return self.session
+        self.session = CloakScraplingSession(self.config)
+        await self.session.start()
+        return self.session
 
     async def status(self) -> dict[str, Any]:
         """Return the current CloakBrowser/Scrapling bridge status."""
         return {
-            "running": bool(self.bridge and self.bridge.cdp_url),
-            "cdp_url": self.bridge.cdp_url if self.bridge else None,
+            "running": bool(self.session and self.session.cdp_url),
+            "cdp_url": self.session.cdp_url if self.session else None,
             "headless": self.config.headless,
             "humanize": self.config.humanize,
             "console": self.config.console,
@@ -50,8 +47,8 @@ class CloakScraplingMCPServer:
         network_idle: bool = False,
     ) -> dict[str, Any]:
         """Fetch a URL through CloakBrowser-backed Scrapling and return extracted content."""
-        bridge = await self._ensure_bridge()
-        result = await bridge.mcp_stealthy_fetch(
+        session = await self._ensure_session()
+        result = await session.mcp_fetch(
             url,
             extraction_type=extraction_type,
             css_selector=css_selector,
@@ -66,54 +63,54 @@ class CloakScraplingMCPServer:
 
     async def open(self, url: str, timeout: int | float = 30000) -> dict[str, Any]:
         """Open a URL in the live browser page."""
-        controller = await self._ensure_controller()
-        return await controller.open_url(url, timeout=timeout)
+        session = await self._ensure_session()
+        return await session.open(url, timeout=timeout)
 
     async def state(self) -> dict[str, Any]:
         """Return indexed interactive elements for the current page."""
-        controller = await self._ensure_controller()
-        return (await controller.state()).to_dict()
+        session = await self._ensure_session()
+        return (await session.state()).to_dict()
 
     async def click(self, index: int) -> dict[str, Any]:
         """Click an element from the latest state result by index."""
-        controller = await self._ensure_controller()
-        return await controller.click(index)
+        session = await self._ensure_session()
+        return await session.click(index)
 
     async def input(self, index: int, text: str) -> dict[str, Any]:
         """Fill an element from the latest state result by index."""
-        controller = await self._ensure_controller()
-        return await controller.input_text(index, text)
+        session = await self._ensure_session()
+        return await session.input(index, text)
 
     async def press(self, key: str) -> dict[str, Any]:
         """Send a keyboard key to the current page."""
-        controller = await self._ensure_controller()
-        return await controller.press(key)
+        session = await self._ensure_session()
+        return await session.press(key)
 
     async def scroll(self, direction: str) -> dict[str, Any]:
         """Scroll the current page up or down."""
-        controller = await self._ensure_controller()
-        return await controller.scroll(direction)
+        session = await self._ensure_session()
+        return await session.scroll(direction)
 
     async def screenshot(self, path: str | None = None) -> dict[str, Any]:
         """Save a full-page screenshot."""
-        controller = await self._ensure_controller()
-        return await controller.screenshot(path)
+        session = await self._ensure_session()
+        return await session.screenshot(path)
 
     async def get_text(self, selector: str | None = None) -> dict[str, Any]:
         """Return text from the page or a CSS selector."""
-        controller = await self._ensure_controller()
-        return {"content": await controller.get_text(selector)}
+        session = await self._ensure_session()
+        return {"content": await session.get_text(selector)}
 
     async def get_html(self, selector: str | None = None) -> dict[str, Any]:
         """Return HTML from the page or a CSS selector."""
-        controller = await self._ensure_controller()
-        return {"content": await controller.get_html(selector)}
+        session = await self._ensure_session()
+        return {"content": await session.get_html(selector)}
 
     async def close_browser(self) -> dict[str, Any]:
         """Close the current CloakBrowser browser session."""
-        if self.bridge is not None:
-            await self.bridge.close()
-            self.bridge = None
+        if self.session is not None:
+            await self.session.close()
+            self.session = None
         return {"closed": True}
 
     async def reset_browser(self) -> dict[str, Any]:
@@ -137,7 +134,7 @@ class CloakScraplingMCPServer:
         server.add_tool(self.reset_browser, title="reset_browser", structured_output=True)
 
     def close_sync(self) -> None:
-        if self.bridge is None:
+        if self.session is None:
             return
         try:
             asyncio.run(self.close_browser())
