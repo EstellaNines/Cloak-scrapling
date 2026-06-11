@@ -20,7 +20,7 @@ are tracked in [`THIRD_PARTY_SOURCES.md`](../THIRD_PARTY_SOURCES.md).
 
 ```text
 AI Agent / script
-  -> cloak_scrapling.CloakScraplingBridge
+  -> cloak_scrapling.CloakScraplingSession
   -> vendored cloakbrowser.launch_async(...)
   -> http://127.0.0.1:<port>/json/version
   -> ws://127.0.0.1:<port>/devtools/browser/<id>
@@ -28,9 +28,27 @@ AI Agent / script
   -> parsed Response / MCP ResponseModel
 ```
 
+`CloakScraplingBridge` remains as a compatibility layer for existing scripts.
+New adapters should use `CloakScraplingSession`, which exposes one facade for
+browser startup, direct fetch, MCP fetch, and live page interaction.
+
+## Core API Layout
+
+- `runtime.py`: cache paths, local source overrides, free port discovery, and CDP readiness checks.
+- `browser_core.py`: browser core resolution, install, cache, and vendor lookup.
+- `browser_models.py`: serializable page state and indexed element models.
+- `browser_controller.py`: Playwright CDP connection and live page actions.
+- `scraping.py`: Scrapling direct fetch and Scrapling MCP fetch helpers.
+- `session.py`: public `CloakScraplingSession` facade used by adapters.
+- `interactive.py` and `mcp_server.py`: thin CLI/MCP adapters over the core facade.
+
+The planned Codex / Claude Code style CLI/TUI should build on
+`CloakScraplingSession` rather than calling CloakBrowser, Scrapling, or
+Playwright directly.
+
 ## Reserved Locations
 
-- `src/cloak_scrapling/`: bridge code and import-safe runtime helpers.
+- `src/cloak_scrapling/`: core session API, bridge compatibility, adapters, and import-safe runtime helpers.
 - `src/cloakbrowser/`: vendored CloakBrowser Python package.
 - `src/scrapling/`: vendored Scrapling Python package.
 - `vendor_browser/`: optional offline browser core drops, one directory per platform.

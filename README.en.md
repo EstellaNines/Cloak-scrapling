@@ -11,6 +11,7 @@ A browser-backed scraping bridge for AI Agents. `cloak-scrapling` wraps CloakBro
 - **MCP Server**: exposes page fetching, page opening, element state, click, input, screenshot, and browser lifecycle tools.
 - **CLI fetcher**: one-shot scraping with `cloak-scrapling-fetch`.
 - **Interactive shell**: bilingual extraction and page interaction shell with `cloak-scrapling-shell`.
+- **Core Session API**: call fetch, MCP extraction, and page interaction through `CloakScraplingSession`.
 - **Agent Skill**: installable with `cloak-scrapling-install-skill` for Codex / Claude.
 - **Vendored CloakBrowser + Scrapling sources**: ships both Python source trees, starts a browser, resolves the CDP WebSocket URL, and returns `text` / `html` / `markdown`.
 - **BrowserAct-like browser core management**: inspect, install, and clear the current platform browser core with `cloak-scrapling-browser`.
@@ -88,6 +89,28 @@ type = "stdio"
 command = "python"
 args = ["-m", "cloak_scrapling.mcp_server"]
 ```
+
+## Python API
+
+Prefer `CloakScraplingSession` for new code. The CLI, MCP server, and future
+Codex / Claude Code style TUI are all intended to reuse this core facade:
+
+```python
+import asyncio
+from cloak_scrapling import CloakScraplingSession
+
+async def main() -> None:
+    async with CloakScraplingSession() as session:
+        await session.open("https://example.com")
+        state = await session.state()
+        print(state.to_text())
+        page = await session.fetch("https://example.com", wait=100)
+        print(page.css("title::text").get())
+
+asyncio.run(main())
+```
+
+`CloakScraplingBridge` remains available for existing scripts.
 
 ## Status
 

@@ -11,6 +11,7 @@
 - **MCP Server**：提供网页抓取、页面打开、元素状态、点击、输入、截图和浏览器生命周期工具。
 - **CLI 抓取**：通过 `cloak-scrapling-fetch` 执行一次性抓取。
 - **交互式 Shell**：通过 `cloak-scrapling-shell` 使用中英文抽取命令与页面交互命令。
+- **核心 Session API**：通过 `CloakScraplingSession` 统一调用抓取、MCP 抽取和页面交互能力。
 - **Agent Skill**：通过 `cloak-scrapling-install-skill` 安装到 Codex / Claude。
 - **内置 CloakBrowser + Scrapling 源码**：随包发布两者 Python 源码，自动启动浏览器、解析 CDP WebSocket，并返回 `text` / `html` / `markdown`。
 - **BrowserAct-like 浏览器核心管理**：通过 `cloak-scrapling-browser` 查看、安装、清理当前平台浏览器核心。
@@ -86,6 +87,27 @@ type = "stdio"
 command = "python"
 args = ["-m", "cloak_scrapling.mcp_server"]
 ```
+
+## Python API
+
+新代码优先使用 `CloakScraplingSession`。CLI、MCP 与后续类 Codex / Claude Code 的 TUI 都会复用这层核心门面：
+
+```python
+import asyncio
+from cloak_scrapling import CloakScraplingSession
+
+async def main() -> None:
+    async with CloakScraplingSession() as session:
+        await session.open("https://example.com")
+        state = await session.state()
+        print(state.to_text())
+        page = await session.fetch("https://example.com", wait=100)
+        print(page.css("title::text").get())
+
+asyncio.run(main())
+```
+
+`CloakScraplingBridge` 仍保留，用于兼容既有脚本。
 
 ## 状态
 

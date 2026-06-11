@@ -79,13 +79,18 @@ Interaction mode reuses the current CloakBrowser session. `state` returns indexe
 
 ## Python API
 
+Prefer the unified `CloakScraplingSession` facade for new code:
+
 ```python
 import asyncio
-from cloak_scrapling import CloakScraplingBridge
+from cloak_scrapling import CloakScraplingSession
 
 async def main() -> None:
-    async with CloakScraplingBridge() as bridge:
-        page = await bridge.fetch("https://example.com", wait=100)
+    async with CloakScraplingSession() as session:
+        await session.open("https://example.com")
+        state = await session.state()
+        print(state.to_text())
+        page = await session.fetch("https://example.com", wait=100)
         print(page.css("title::text").get())
 
 asyncio.run(main())
@@ -95,11 +100,11 @@ MCP-style call:
 
 ```python
 import asyncio
-from cloak_scrapling import CloakScraplingBridge
+from cloak_scrapling import CloakScraplingSession
 
 async def main() -> None:
-    async with CloakScraplingBridge() as bridge:
-        result = await bridge.mcp_stealthy_fetch(
+    async with CloakScraplingSession() as session:
+        result = await session.mcp_fetch(
             "https://example.com",
             extraction_type="markdown",
             css_selector="main",
@@ -109,6 +114,8 @@ async def main() -> None:
 
 asyncio.run(main())
 ```
+
+`CloakScraplingBridge` remains available for existing scripts.
 
 ## Environment variables
 

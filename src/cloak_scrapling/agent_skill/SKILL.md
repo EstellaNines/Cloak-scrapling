@@ -39,6 +39,17 @@ get_text(selector=None)
 
 The MCP server starts CloakBrowser automatically, extracts the CDP WebSocket URL, connects Scrapling over CDP for extraction, and connects Playwright over the same CDP URL for page interaction.
 
+For direct Python use, prefer the shared session facade:
+
+```python
+from cloak_scrapling import CloakScraplingSession
+```
+
+`CloakScraplingSession` exposes `fetch`, `mcp_fetch`, `open`, `state`,
+`click`, `input`, `press`, `scroll`, `screenshot`, `get_text`, and `get_html`.
+CLI, MCP, and future Codex / Claude Code style interfaces should call this
+facade instead of reaching into CloakBrowser, Scrapling, or Playwright directly.
+
 The Python sources for `cloakbrowser` and `scrapling` are bundled inside the
 `cloak-scrapling` package; do not require separate upstream package installs
 unless explicitly testing upstream checkouts.
