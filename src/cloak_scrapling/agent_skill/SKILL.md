@@ -60,6 +60,30 @@ CloakBrowser cache, then CloakBrowser install/download.
 
 ## CLI Fallback
 
+Agent-style CLI:
+
+```powershell
+cloak-scrapling-agent --headful
+```
+
+Useful slash commands:
+
+```text
+/help
+/open https://example.com
+/state
+/text body
+/fetch https://example.com title::text
+/status
+/close
+/exit
+```
+
+Use `cloak-scrapling-agent` when the operator wants a Codex / Claude Code style
+bottom prompt, slash commands, status output, and command completion. Use
+`cloak-scrapling-shell` when the operator wants the older command-oriented
+crawler shell.
+
 One-shot fetch:
 
 ```powershell

@@ -77,6 +77,32 @@ exit
 
 交互模式会复用当前 CloakBrowser 会话。`state` 会返回当前页面可操作元素编号；页面变化后需要重新运行 `state` 刷新编号。
 
+## Agent CLI
+
+`cloak-scrapling-agent` 是类 Codex / Claude Code 的 slash command 操作界面，底层同样复用 `CloakScraplingSession`：
+
+```powershell
+cloak-scrapling-agent --headful
+```
+
+常用命令：
+
+```text
+/help
+/open https://example.com
+/state
+/click 1
+/input 2 hello
+/text body
+/fetch https://example.com title::text
+/mcp https://example.com body
+/status
+/close
+/exit
+```
+
+旧 `cloak-scrapling-shell` 适合命令式爬虫操作；新 `cloak-scrapling-agent` 适合 Agent 风格的底部输入、命令补全与状态流。
+
 ## Python API
 
 新代码建议使用统一门面 `CloakScraplingSession`：

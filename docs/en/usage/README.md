@@ -77,6 +77,35 @@ exit
 
 Interaction mode reuses the current CloakBrowser session. `state` returns indexed elements for the current page; run `state` again after page changes to refresh indexes.
 
+## Agent CLI
+
+`cloak-scrapling-agent` is a Codex / Claude Code style slash-command interface.
+It reuses the same `CloakScraplingSession` backend:
+
+```powershell
+cloak-scrapling-agent --headful
+```
+
+Common commands:
+
+```text
+/help
+/open https://example.com
+/state
+/click 1
+/input 2 hello
+/text body
+/fetch https://example.com title::text
+/mcp https://example.com body
+/status
+/close
+/exit
+```
+
+The older `cloak-scrapling-shell` is the command-oriented crawler shell. The new
+`cloak-scrapling-agent` is the Agent-oriented interface with a bottom prompt,
+completion, and status-oriented output.
+
 ## Python API
 
 Prefer the unified `CloakScraplingSession` facade for new code:

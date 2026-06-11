@@ -11,6 +11,7 @@ A browser-backed scraping bridge for AI Agents. `cloak-scrapling` wraps CloakBro
 - **MCP Server**: exposes page fetching, page opening, element state, click, input, screenshot, and browser lifecycle tools.
 - **CLI fetcher**: one-shot scraping with `cloak-scrapling-fetch`.
 - **Interactive shell**: bilingual extraction and page interaction shell with `cloak-scrapling-shell`.
+- **Agent CLI**: Codex / Claude Code style slash-command interface with `cloak-scrapling-agent`.
 - **Core Session API**: call fetch, MCP extraction, and page interaction through `CloakScraplingSession`.
 - **Agent Skill**: installable with `cloak-scrapling-install-skill` for Codex / Claude.
 - **Vendored CloakBrowser + Scrapling sources**: ships both Python source trees, starts a browser, resolves the CDP WebSocket URL, and returns `text` / `html` / `markdown`.
@@ -51,6 +52,7 @@ python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.1-py3-none-an
 ```powershell
 cloak-scrapling-fetch --help
 cloak-scrapling-shell --help
+cloak-scrapling-agent --help
 cloak-scrapling-mcp --help
 cloak-scrapling-browser --help
 cloak-scrapling-install-skill --help
@@ -72,6 +74,27 @@ click 3
 text body
 ```
 
+Agent CLI slash-command interface:
+
+```powershell
+cloak-scrapling-agent --headful
+```
+
+```text
+/help
+/open https://example.com
+/state
+/text body
+/fetch https://example.com title::text
+/status
+/close
+/exit
+```
+
+`cloak-scrapling-shell` remains the command-oriented crawler shell.
+`cloak-scrapling-agent` is the Agent-oriented interface with a bottom prompt,
+slash commands, status output, and command completion.
+
 ## Minimal MCP config
 
 ```toml
@@ -92,8 +115,8 @@ args = ["-m", "cloak_scrapling.mcp_server"]
 
 ## Python API
 
-Prefer `CloakScraplingSession` for new code. The CLI, MCP server, and future
-Codex / Claude Code style TUI are all intended to reuse this core facade:
+Prefer `CloakScraplingSession` for new code. The CLI, MCP server, and Agent CLI
+all reuse this core facade:
 
 ```python
 import asyncio

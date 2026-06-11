@@ -11,6 +11,7 @@
 - **MCP Server**：提供网页抓取、页面打开、元素状态、点击、输入、截图和浏览器生命周期工具。
 - **CLI 抓取**：通过 `cloak-scrapling-fetch` 执行一次性抓取。
 - **交互式 Shell**：通过 `cloak-scrapling-shell` 使用中英文抽取命令与页面交互命令。
+- **Agent CLI**：通过 `cloak-scrapling-agent` 使用类 Codex / Claude Code 的 slash command 操作界面。
 - **核心 Session API**：通过 `CloakScraplingSession` 统一调用抓取、MCP 抽取和页面交互能力。
 - **Agent Skill**：通过 `cloak-scrapling-install-skill` 安装到 Codex / Claude。
 - **内置 CloakBrowser + Scrapling 源码**：随包发布两者 Python 源码，自动启动浏览器、解析 CDP WebSocket，并返回 `text` / `html` / `markdown`。
@@ -49,6 +50,7 @@ python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.1-py3-none-an
 ```powershell
 cloak-scrapling-fetch --help
 cloak-scrapling-shell --help
+cloak-scrapling-agent --help
 cloak-scrapling-mcp --help
 cloak-scrapling-browser --help
 cloak-scrapling-install-skill --help
@@ -70,6 +72,25 @@ click 3
 text body
 ```
 
+Agent CLI slash command 界面：
+
+```powershell
+cloak-scrapling-agent --headful
+```
+
+```text
+/help
+/open https://example.com
+/state
+/text body
+/fetch https://example.com title::text
+/status
+/close
+/exit
+```
+
+`cloak-scrapling-shell` 保留原命令式爬虫壳；`cloak-scrapling-agent` 面向 Agent 操作流，提供底部输入、slash command、状态输出与命令补全。
+
 ## 基本 MCP 配置
 
 ```toml
@@ -90,7 +111,7 @@ args = ["-m", "cloak_scrapling.mcp_server"]
 
 ## Python API
 
-新代码优先使用 `CloakScraplingSession`。CLI、MCP 与后续类 Codex / Claude Code 的 TUI 都会复用这层核心门面：
+新代码优先使用 `CloakScraplingSession`。CLI、MCP 与 Agent CLI 都会复用这层核心门面：
 
 ```python
 import asyncio

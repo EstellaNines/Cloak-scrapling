@@ -40,11 +40,11 @@ browser startup, direct fetch, MCP fetch, and live page interaction.
 - `browser_controller.py`: Playwright CDP connection and live page actions.
 - `scraping.py`: Scrapling direct fetch and Scrapling MCP fetch helpers.
 - `session.py`: public `CloakScraplingSession` facade used by adapters.
-- `interactive.py` and `mcp_server.py`: thin CLI/MCP adapters over the core facade.
+- `agent_cli.py`: Codex / Claude Code style slash-command Agent CLI over the core facade.
+- `interactive.py` and `mcp_server.py`: thin legacy shell and MCP adapters over the core facade.
 
-The planned Codex / Claude Code style CLI/TUI should build on
-`CloakScraplingSession` rather than calling CloakBrowser, Scrapling, or
-Playwright directly.
+The Agent CLI builds on `CloakScraplingSession` rather than calling
+CloakBrowser, Scrapling, or Playwright directly.
 
 ## Reserved Locations
 
