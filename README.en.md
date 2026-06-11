@@ -1,84 +1,106 @@
-﻿# Cloak-scrapling
+# Cloak-scrapling
 
 English | [简体中文](README.md)
 
-A browser-backed scraping bridge for AI Agents. `cloak-scrapling` wraps CloakBrowser stealth Chromium and Scrapling extraction into a CLI, an MCP server, and an installable Agent Skill, so MCP-capable agents can fetch dynamic pages through a real browser.
+`cloak-scrapling` is a browser-backed scraping framework layer for AI Agents. It
+brings vendored CloakBrowser, vendored Scrapling, browser-core management, a
+single Session API, CLIs, an MCP server, and an installable Agent Skill into one
+runtime so agents can extract and interact with dynamic pages through a real
+Chromium browser.
 
 ![Cloak-scrapling workflow](docs/usage-flow.svg)
 
-## Features
+## Framework Position
 
-- **MCP Server**: exposes page fetching, page opening, element state, click, input, screenshot, and browser lifecycle tools.
-- **CLI fetcher**: one-shot scraping with `cloak-scrapling-fetch`.
-- **Interactive shell**: bilingual extraction and page interaction shell with `cloak-scrapling-shell`.
-- **Agent CLI**: Codex / Claude Code style slash-command interface with `cloak-scrapling-agent`.
-- **Core Session API**: call fetch, MCP extraction, and page interaction through `CloakScraplingSession`.
-- **Agent Skill**: installable with `cloak-scrapling-install-skill` for Codex / Claude.
-- **Vendored CloakBrowser + Scrapling sources**: ships both Python source trees, starts a browser, resolves the CDP WebSocket URL, and returns `text` / `html` / `markdown`.
-- **BrowserAct-like browser core management**: inspect, install, and clear the current platform browser core with `cloak-scrapling-browser`.
-- **Sidecar Console**: optional colored input/output audit console.
+`CloakScraplingSession` is the central facade for the current framework. New
+code, CLIs, MCP tools, the Agent CLI, and the legacy interactive shell should
+call through this facade instead of reaching directly into CloakBrowser,
+Scrapling, or Playwright.
 
-## Quick start
+```text
+AI Agent / CLI / Python script
+  -> CloakScraplingSession
+  -> CloakScraplingBridge
+  -> CloakBrowser Chromium + CDP
+  -> Scrapling fetch / MCP extraction
+  -> BrowserController page actions
+```
+
+The package currently ships:
+
+- `cloak_scrapling`: framework glue, Session API, CLIs, MCP, Skill, and browser-core resolution.
+- `cloakbrowser`: vendored upstream Python sources for stealth browser launch and cache handling.
+- `scrapling`: vendored upstream Python sources for page fetching, selectors, and content conversion.
+- `vendor_browser/`: optional offline browser core drops; without a local core, CloakBrowser cache or download remains available.
+
+## Quick Start
+
+Install and run a one-shot fetch:
 
 ```powershell
 python -m pip install cloak-scrapling
 cloak-scrapling-fetch https://example.com --selector "title::text"
 ```
 
-The `cloakbrowser` and `scrapling` Python sources are bundled in this package.
-The browser core is resolved in this order: `CLOAKBROWSER_BINARY_PATH`,
-`vendor_browser/<platform>/`, CloakBrowser cache, then install/download.
+Inspect or install the current platform browser core:
 
-Install from local wheel:
+```powershell
+cloak-scrapling-browser info
+cloak-scrapling-browser install
+```
+
+Browser core resolution order:
+
+```text
+CLOAKBROWSER_BINARY_PATH
+  -> vendor_browser/<platform>/
+  -> CloakBrowser cache
+  -> CloakBrowser install/download
+```
+
+Install from a local wheel:
 
 ```powershell
 python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.1-py3-none-any.whl
 ```
 
-## Documentation
+## Public Entrypoints
 
-| Document | Content |
+| Entrypoint | Purpose |
 | --- | --- |
-| [Installation & packaging](docs/en/installation/README.md) | pip install, local wheel, source install, package build. |
-| [Usage](docs/en/usage/README.md) | CLI, interactive shell, Python API, environment variables. |
-| [MCP tools](docs/en/mcp/README.md) | MCP server, tools, `fetch` arguments. |
-| [AI Agent setup](docs/en/agents/README.md) | Codex, Claude, Cursor, Windsurf, Cline/Roo Code configuration. |
-| [Development & security](docs/en/development/README.md) | Tests, package checks, security notes. |
-| [Architecture](docs/architecture.md) | Bridge runtime flow and structure. |
-| [Third-party sources](THIRD_PARTY_SOURCES.md) | Vendored Scrapling / CloakBrowser sources, commits, and licenses. |
+| `CloakScraplingSession` | Unified core API for fetch, MCP extraction, and page interaction. |
+| `cloak-scrapling-agent` | Codex / Claude Code style Agent CLI UI. |
+| `cloak-scrapling-shell` | Legacy command shell with bilingual commands. |
+| `cloak-scrapling-fetch` | One-shot command-line fetcher. |
+| `cloak-scrapling-mcp` | MCP server for agent tool calls. |
+| `cloak-scrapling-browser` | Browser core info, install, and cache cleanup. |
+| `cloak-scrapling-install-skill` | Installs the Agent Skill into Codex / Claude. |
 
-## Commands
+## Capability Matrix
 
-```powershell
-cloak-scrapling-fetch --help
-cloak-scrapling-shell --help
-cloak-scrapling-agent --help
-cloak-scrapling-mcp --help
-cloak-scrapling-browser --help
-cloak-scrapling-install-skill --help
-cloakbrowser --help
-scrapling --help
-```
+| Capability | Session API | CLI / MCP Mapping |
+| --- | --- | --- |
+| Direct fetch | `fetch(url, **kwargs)` | `cloak-scrapling-fetch` / shell `fetch` |
+| MCP-style extraction | `mcp_fetch(url, **kwargs)` | shell `/mcp` / MCP `fetch` |
+| Open page | `open(url)` | Agent CLI `/open` / MCP `open` |
+| Page state | `state()` | Agent CLI `/state` / MCP `state` |
+| Click element | `click(index)` | Agent CLI `/click` / MCP `click` |
+| Type text | `input(index, text)` | Agent CLI `/input` / MCP `input` |
+| Press key | `press(key)` | Agent CLI `/press` / MCP `press` |
+| Scroll | `scroll(direction)` | Agent CLI `/scroll` / MCP `scroll` |
+| Screenshot | `screenshot(path=None)` | Agent CLI `/screenshot` / MCP `screenshot` |
+| Read text | `get_text(selector=None)` | Agent CLI `/text` / MCP `get_text` |
+| Read HTML | `get_html(selector=None)` | Agent CLI `/html` / MCP `get_html` |
 
-Interactive page operations:
+## Agent CLI UI
 
-```powershell
-cloak-scrapling-shell --lang en
-```
-
-```text
-open https://example.com
-state
-input 2 hello
-click 3
-text body
-```
-
-Agent CLI slash-command interface:
+Start it with:
 
 ```powershell
 cloak-scrapling-agent --headful
 ```
+
+Typical flow:
 
 ```text
 /help
@@ -91,11 +113,27 @@ cloak-scrapling-agent --headful
 /exit
 ```
 
-`cloak-scrapling-shell` remains the command-oriented crawler shell.
-`cloak-scrapling-agent` is the Agent-oriented interface with a bottom prompt,
-slash commands, status output, and command completion.
+The Agent CLI now uses a Codex / Claude Code style transcript:
 
-## Minimal MCP config
+- Grey-backed `› /command`: user input or slash command.
+- White dot `● content`: content returned by fetch, MCP extraction, or text reads.
+- Green dot `● opened ...`: successful browser action output, with markers such as `status=`, `title=`, `url=`, and `path=` highlighted.
+
+`cloak-scrapling-shell` remains the command-oriented crawler shell.
+`cloak-scrapling-agent` is the Agent-oriented interface with bottom input,
+slash commands, completion, status output, and transcript styling.
+
+## MCP and Skill Compatibility
+
+MCP is currently compatible. `cloak-scrapling-mcp` holds its browser session
+through `CloakScraplingSession` and exposes these tools:
+
+```text
+status / fetch / open / state / click / input / press / scroll
+screenshot / get_text / get_html / close_browser / reset_browser
+```
+
+Minimal MCP config:
 
 ```toml
 [mcp_servers.cloak-scrapling]
@@ -104,7 +142,7 @@ command = "cloak-scrapling-mcp"
 args = []
 ```
 
-Fallback module form:
+If the agent cannot find the executable command, use the module form:
 
 ```toml
 [mcp_servers.cloak-scrapling]
@@ -113,34 +151,71 @@ command = "python"
 args = ["-m", "cloak_scrapling.mcp_server"]
 ```
 
+The Agent Skill is also basically compatible. It instructs agents to prefer the
+MCP server and fall back to CLIs when MCP is unavailable. This round refreshes
+the Skill wording so it treats the Agent CLI as current functionality and
+documents the transcript UI semantics.
+
+Install the Skill:
+
+```powershell
+cloak-scrapling-install-skill --agent codex --force
+cloak-scrapling-install-skill --agent claude --force
+```
+
 ## Python API
 
-Prefer `CloakScraplingSession` for new code. The CLI, MCP server, and Agent CLI
-all reuse this core facade:
+Prefer `CloakScraplingSession` for new code:
 
 ```python
 import asyncio
+
 from cloak_scrapling import CloakScraplingSession
+
 
 async def main() -> None:
     async with CloakScraplingSession() as session:
         await session.open("https://example.com")
         state = await session.state()
         print(state.to_text())
+
         page = await session.fetch("https://example.com", wait=100)
         print(page.css("title::text").get())
+
 
 asyncio.run(main())
 ```
 
-`CloakScraplingBridge` remains available for existing scripts.
+`CloakScraplingBridge` remains available for existing scripts. New adapters
+should not bypass `CloakScraplingSession`.
 
-## Status
+## Documentation
 
-The package now contains the `cloak_scrapling`, `cloakbrowser`, and `scrapling`
-Python packages. It builds wheel / sdist artifacts and passes:
+| Document | Content |
+| --- | --- |
+| [Installation & packaging](docs/en/installation/README.md) | pip install, local wheel, source install, package build. |
+| [Usage](docs/en/usage/README.md) | CLI, interactive shell, Python API, environment variables. |
+| [MCP tools](docs/en/mcp/README.md) | MCP server, tools, `fetch` arguments. |
+| [AI Agent setup](docs/en/agents/README.md) | Codex, Claude, Cursor, Windsurf, Cline/Roo Code configuration. |
+| [Development & security](docs/en/development/README.md) | Tests, package checks, security notes. |
+| [Architecture](docs/architecture.md) | Bridge runtime flow and module structure. |
+| [Third-party sources](THIRD_PARTY_SOURCES.md) | Vendored Scrapling / CloakBrowser sources, commits, and licenses. |
+
+## Development Verification
+
+Common verification commands:
 
 ```powershell
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v
+python3 -m compileall -q src scripts tests
+git diff --check
+PYTHONPATH=src python3 -m cloak_scrapling.agent_cli --once /status
+```
+
+Package checks:
+
+```powershell
+python -m build
 python -m twine check dist\*
 ```
 
