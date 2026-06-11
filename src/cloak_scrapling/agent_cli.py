@@ -35,6 +35,7 @@ class AgentCliApp:
             except (EOFError, KeyboardInterrupt):
                 self.renderer.render_event(AgentEvent(kind="system", message="exiting"))
                 return 0
+            self.renderer.render_event(AgentEvent(kind="user", message=line))
             result = await self.dispatch(line)
             self.renderer.render_events(result.events)
             if result.status is not None:
@@ -224,6 +225,7 @@ class AgentCliApp:
         return answer in {"y", "yes"}
 
     async def run_once(self, line: str) -> int:
+        self.renderer.render_event(AgentEvent(kind="user", message=line))
         result = await self.dispatch(line)
         self.renderer.render_events(result.events)
         if result.status is not None:

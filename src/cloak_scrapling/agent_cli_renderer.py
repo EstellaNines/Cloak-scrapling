@@ -19,6 +19,9 @@ EVENT_STYLES: dict[str, str] = {
 BRAND_ICON = "◈"
 BRAND_WORDMARK = "Cloak Scrapling"
 BRAND_SUBTITLE = "Agent CLI / browser control / scraping"
+INPUT_MARK = "›"
+EVENT_DOT = "●"
+HIGHLIGHT_KEYS = {"status", "title", "url", "path", "index", "selector"}
 
 
 class AgentCliRenderer:
@@ -52,6 +55,16 @@ class AgentCliRenderer:
             self.render_event(event)
 
     def render_event(self, event: AgentEvent) -> None:
+        if event.kind == "user":
+            self._render_user_event(event)
+            return
+        if event.kind == "result":
+            self._render_dot_event(event, dot_style="white", body_style="white")
+            return
+        if event.kind == "browser":
+            self._render_dot_event(event, dot_style="bold green", body_style="green")
+            return
+
         prefix = f"[{event.kind}]"
         message = f"{prefix} {event.message}"
         if event.details:
@@ -81,6 +94,62 @@ class AgentCliRenderer:
             self.console.print(message, style=style)
             return
         print(message)
+
+    def _render_user_event(self, event: AgentEvent) -> None:
+        message = f"{INPUT_MARK} {event.message}"
+        if self._rich_available:
+            self.console.print(message, style="bold white on grey23")
+            return
+        print(message)
+
+    def _render_dot_event(self, event: AgentEvent, *, dot_style: str, body_style: str) -> None:
+        if self._rich_available:
+            self._render_rich_dot_event(event, dot_style=dot_style, body_style=body_style)
+            return
+
+        message = self._event_text(event)
+        for index, line in enumerate(message.splitlines() or [""]):
+            prefix = f"{EVENT_DOT} " if index == 0 else "  "
+            print(f"{prefix}{line}")
+
+    def _render_rich_dot_event(self, event: AgentEvent, *, dot_style: str, body_style: str) -> None:
+        from rich.text import Text
+
+        message = self._event_text(event)
+        text = Text()
+        text.append(EVENT_DOT, style=dot_style)
+        text.append(" ")
+        first = True
+        for line in message.splitlines() or [""]:
+            if not first:
+                text.append("\n  ")
+            self._append_highlighted(text, line, body_style=body_style)
+            first = False
+        self.console.print(text)
+
+    def _event_text(self, event: AgentEvent) -> str:
+        if not event.details:
+            return event.message
+        details = " ".join(f"{key}={value}" for key, value in event.details.items())
+        return f"{event.message} {details}"
+
+    def _append_highlighted(self, text: Any, line: str, *, body_style: str) -> None:
+        remaining = line
+        while remaining:
+            matches = [
+                (remaining.find(f"{key}="), f"{key}=")
+                for key in HIGHLIGHT_KEYS
+                if remaining.find(f"{key}=") >= 0
+            ]
+            if not matches:
+                text.append(remaining, style=body_style)
+                return
+
+            index, token = min(matches, key=lambda item: item[0])
+            if index:
+                text.append(remaining[:index], style=body_style)
+            text.append(token, style=f"bold {body_style}")
+            remaining = remaining[index + len(token) :]
 
     def _render_rich_banner(self) -> None:
         from rich import box

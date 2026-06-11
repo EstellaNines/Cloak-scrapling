@@ -115,6 +115,27 @@ class AgentCliRendererTests(unittest.TestCase):
         self.assertIn("[system] ready", printed)
         self.assertIn("running=True", printed)
 
+    def test_plain_renderer_uses_input_and_dot_event_shapes(self) -> None:
+        renderer = AgentCliRenderer()
+        renderer._rich_available = False
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            renderer.render_event(AgentEvent(kind="user", message="/state"))
+            renderer.render_event(AgentEvent(kind="result", message="page text"))
+            renderer.render_event(
+                AgentEvent(
+                    kind="browser",
+                    message="opened https://example.test",
+                    details={"status": 200, "title": "Fake"},
+                )
+            )
+
+        printed = output.getvalue()
+        self.assertIn("› /state", printed)
+        self.assertIn("● page text", printed)
+        self.assertIn("● opened https://example.test status=200 title=Fake", printed)
+
 
 class AgentCliFlowTests(unittest.IsolatedAsyncioTestCase):
     async def test_open_state_fetch_and_close_use_session(self) -> None:
@@ -141,6 +162,20 @@ class AgentCliFlowTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result.events[0].message, "/close canceled")
         self.assertFalse(session.closed)
+
+    async def test_run_once_echoes_user_input_before_result(self) -> None:
+        session = FakeSession()
+        renderer = AgentCliRenderer()
+        renderer._rich_available = False
+        app = AgentCliApp(_args(), renderer=renderer, session=session)
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            await app.run_once("/open https://example.test")
+
+        printed = output.getvalue()
+        self.assertIn("› /open https://example.test", printed)
+        self.assertIn("● opened https://example.test status=200 title=Fake", printed)
 
 
 if __name__ == "__main__":
