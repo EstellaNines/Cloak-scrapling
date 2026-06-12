@@ -1,66 +1,104 @@
 ---
 name: cloak-scrapling
-description: Use when an AI Agent needs browser-backed web scraping through CloakBrowser stealth Chromium and Scrapling parsing/MCP tools.
+description: Use when an AI Agent needs automated browser-backed scraping, dynamic page extraction, or page interaction through Cloak-scrapling MCP tools, CLI commands, or the Python Session API.
 ---
 
 # Cloak-scrapling Agent Skill
 
-Use `cloak-scrapling` when the task needs:
+Use this skill when the task needs automated web scraping through a real
+CloakBrowser Chromium session, especially when the page needs JavaScript
+rendering, stealth browser behavior, clicks, form input, scrolling, screenshots,
+or CSS selector extraction.
 
-- Browser-backed scraping with stealth Chromium.
-- Dynamic page rendering before extraction.
-- CSS selector extraction, text/HTML/Markdown output, or MCP-driven fetches.
-- Live page interaction: open a page, inspect indexed elements, click, input, scroll, press keys, and screenshot.
-- A visible sidecar console for Agent input/output audit logs.
+## Tool Selection
 
-## Preferred Tools
-
-Use the MCP server when available:
+Prefer the MCP server when the host Agent supports MCP:
 
 ```text
 cloak-scrapling-mcp
 ```
 
-Primary extraction MCP tool:
+Use the Agent CLI when a human operator wants an interactive terminal surface:
+
+```text
+cloak-scrapling-agent --headful
+```
+
+Use the one-shot CLI when MCP is unavailable and the task only needs extraction:
+
+```text
+cloak-scrapling-fetch <url> --selector "<css or selector::text>"
+```
+
+Use Python only when the Agent is editing or running project code directly:
+
+```python
+from cloak_scrapling import CloakScraplingSession
+```
+
+All adapters should call `CloakScraplingSession` rather than reaching directly
+into CloakBrowser, Scrapling, or Playwright.
+
+## MCP Automation Workflow
+
+For direct extraction:
 
 ```text
 fetch(url, extraction_type="markdown", css_selector=None, main_content_only=True)
 ```
 
-Primary interaction MCP flow:
+For browser interaction:
 
 ```text
 open(url)
 state()
 input(index, text)
 click(index)
+press(key)
+scroll(direction)
 get_text(selector=None)
+get_html(selector=None)
+screenshot(path=None)
 ```
 
-The MCP server starts CloakBrowser automatically, extracts the CDP WebSocket URL, connects Scrapling over CDP for extraction, and connects Playwright over the same CDP URL for page interaction.
+Recommended Agent loop:
 
-For direct Python use, prefer the shared session facade:
+1. Call `open(url)` for pages that need rendering or interaction.
+2. Call `state()` and inspect indexed interactive elements.
+3. Use `input`, `click`, `press`, or `scroll` with indexes from the latest `state`.
+4. Call `state()` again after navigation or DOM changes.
+5. Extract with `get_text`, `get_html`, or `fetch` depending on the task.
+6. Use `screenshot` when visual confirmation or debugging is needed.
+7. Close or reset with `close_browser` / `reset_browser` when the task is done.
 
-```python
-from cloak_scrapling import CloakScraplingSession
+Element indexes are only valid for the latest `state()` result. Refresh state
+after any click, input, navigation, or scroll that may change the DOM.
+
+## Available MCP Tools
+
+```text
+status
+fetch
+open
+state
+click
+input
+press
+scroll
+screenshot
+get_text
+get_html
+close_browser
+reset_browser
 ```
 
-`CloakScraplingSession` exposes `fetch`, `mcp_fetch`, `open`, `state`,
-`click`, `input`, `press`, `scroll`, `screenshot`, `get_text`, and `get_html`.
-CLI, MCP, and future Codex / Claude Code style interfaces should call this
-facade instead of reaching into CloakBrowser, Scrapling, or Playwright directly.
+`fetch` returns extracted content from Scrapling through the CloakBrowser CDP
+session. Interaction tools reuse the same browser session through Playwright CDP
+control and return structured dictionaries suitable for Agent planning.
 
-The Python sources for `cloakbrowser` and `scrapling` are bundled inside the
-`cloak-scrapling` package; do not require separate upstream package installs
-unless explicitly testing upstream checkouts.
+## Agent CLI Fallback
 
-Use `cloak-scrapling-browser info` to inspect the active browser core. The
-resolver checks `CLOAKBROWSER_BINARY_PATH`, `vendor_browser/<platform>/`,
-CloakBrowser cache, then CloakBrowser install/download.
-
-## CLI Fallback
-
-Agent-style CLI:
+Start:
 
 ```powershell
 cloak-scrapling-agent --headful
@@ -72,60 +110,70 @@ Useful slash commands:
 /help
 /open https://example.com
 /state
+/input 2 search text
+/click 3
 /text body
+/html main
 /fetch https://example.com title::text
+/mcp https://example.com body
+/screenshot
 /status
 /close
 /exit
 ```
 
-Use `cloak-scrapling-agent` when the operator wants a Codex / Claude Code style
-bottom prompt, slash commands, status output, and command completion. Use
-`cloak-scrapling-shell` when the operator wants the older command-oriented
-crawler shell.
+The Agent CLI transcript is designed for Codex / Claude Code style operation:
 
-One-shot fetch:
+- Grey-backed `› /command`: user input or slash command.
+- White dot `● content`: fetched, extracted, or text-read content.
+- Green dot `● opened ...`: successful browser action output with highlighted markers such as `status=`, `title=`, `url=`, and `path=`.
+
+Use `cloak-scrapling-shell --lang zh` only when the operator wants the older
+command-oriented crawler shell.
+
+## Browser Core and Runtime Notes
+
+The Python sources for `cloakbrowser` and `scrapling` are bundled inside the
+`cloak-scrapling` package. Do not require separate upstream package installs
+unless explicitly testing upstream checkouts.
+
+Inspect or install the active browser core with:
 
 ```powershell
-cloak-scrapling-fetch https://example.com --selector "title::text"
+cloak-scrapling-browser info
+cloak-scrapling-browser install
 ```
 
-Interactive shell:
-
-```powershell
-cloak-scrapling-shell --lang zh
-```
-
-Useful shell commands:
+Browser core resolution order:
 
 ```text
-open https://example.com
-state
-input 2 hello
-click 3
-text body
-fetch https://example.com title::text
-mcp https://example.com body
-lang en
-console on
-config
-exit
+CLOAKBROWSER_BINARY_PATH
+vendor_browser/<platform>/
+CloakBrowser cache
+CloakBrowser install/download
 ```
+
+For shared or offline caches, set `CLOAK_SCRAPLING_CACHE_DIR` or
+`CLOAKBROWSER_CACHE_DIR`. For offline deployments, place the browser core in the
+documented `vendor_browser/<platform>/` layout.
+
+## Safety and Failure Handling
+
+- Do not expose `cloak-scrapling-mcp --http --host 0.0.0.0` to untrusted networks.
+- Do not pass plain `http://127.0.0.1:<port>` as Scrapling `cdp_url`; Scrapling expects `ws://` or `wss://`.
+- If an element action fails, call `state()` again before retrying.
+- If `fetch` is enough, prefer it over interactive browser actions.
+- If MCP is unavailable, use `cloak-scrapling-agent` or `cloak-scrapling-fetch`.
+- If dependencies are missing in a bare interpreter, run inside the installed package environment or install project dependencies.
 
 ## Console Audit
 
-Enable a visible colored console:
+For visible browser and Agent event logs:
 
 ```powershell
 $env:CLOAK_SCRAPLING_CONSOLE = "1"
 $env:CLOAK_SCRAPLING_CONSOLE_HOLD = "1"
 ```
 
-The console logs `SYSTEM`, `LAUNCH`, `CDP`, `INPUT`, `OUTPUT`, `MCP`, and `ERROR` events to `.logs/agent-*.jsonl`.
-
-## Operational Notes
-
-- Do not pass plain `http://127.0.0.1:<port>` as Scrapling `cdp_url`; Scrapling requires `ws://` or `wss://`.
-- Element indexes are valid only for the latest `state` result; run `state` again after navigation or DOM changes.
-- The package does not commit Chromium binaries in v1; place offline cores in `vendor_browser/<platform>/` or use `cloak-scrapling-browser install`.
-- Set `CLOAK_SCRAPLING_CACHE_DIR` or `CLOAKBROWSER_CACHE_DIR` for shared/offline browser caches.
+The console records `SYSTEM`, `LAUNCH`, `CDP`, `INPUT`, `OUTPUT`, `MCP`, and
+`ERROR` events to `.logs/agent-*.jsonl`.
