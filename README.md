@@ -70,7 +70,7 @@ python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.1-py3-none-an
 | `cloak-scrapling-agent` | 类 Codex / Claude Code 的 Agent CLI UI。 |
 | `cloak-scrapling-shell` | 旧式命令交互 Shell，支持中英文命令。 |
 | `cloak-scrapling-fetch` | 一次性命令行抓取。 |
-| `cloak-scrapling-mcp` | MCP Server，供 Agent 通过工具调用。 |
+| `cloak-scrapling-mcp` | MCP Server，支持 `uvx cloak-scrapling-mcp` 免安装调用。 |
 | `cloak-scrapling-browser` | 浏览器核心信息、安装与缓存清理。 |
 | `cloak-scrapling-install-skill` | 安装 Agent Skill 到 Codex / Claude。 |
 
@@ -131,7 +131,20 @@ status / fetch / open / state / click / input / press / scroll
 screenshot / get_text / get_html / close_browser / reset_browser
 ```
 
-最小 MCP 配置：
+推荐 uvx MCP 配置：
+
+```json
+{
+  "mcpServers": {
+    "cloak-scrapling": {
+      "command": "uvx",
+      "args": ["cloak-scrapling-mcp"]
+    }
+  }
+}
+```
+
+若已安装主包，也可使用 console script：
 
 ```toml
 [mcp_servers.cloak-scrapling]

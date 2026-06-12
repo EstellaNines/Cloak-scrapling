@@ -12,7 +12,13 @@ or CSS selector extraction.
 
 ## Tool Selection
 
-Prefer the MCP server when the host Agent supports MCP:
+Prefer the uvx MCP package when the host Agent supports MCP:
+
+```text
+uvx cloak-scrapling-mcp
+```
+
+If the main package is already installed, this console script is equivalent:
 
 ```text
 cloak-scrapling-mcp

@@ -72,7 +72,7 @@ python -m pip install --force-reinstall .\dist\cloak_scrapling-0.1.1-py3-none-an
 | `cloak-scrapling-agent` | Codex / Claude Code style Agent CLI UI. |
 | `cloak-scrapling-shell` | Legacy command shell with bilingual commands. |
 | `cloak-scrapling-fetch` | One-shot command-line fetcher. |
-| `cloak-scrapling-mcp` | MCP server for agent tool calls. |
+| `cloak-scrapling-mcp` | MCP server for agent tool calls, runnable with `uvx cloak-scrapling-mcp`. |
 | `cloak-scrapling-browser` | Browser core info, install, and cache cleanup. |
 | `cloak-scrapling-install-skill` | Installs the Agent Skill into Codex / Claude. |
 
@@ -133,7 +133,20 @@ status / fetch / open / state / click / input / press / scroll
 screenshot / get_text / get_html / close_browser / reset_browser
 ```
 
-Minimal MCP config:
+Recommended uvx MCP config:
+
+```json
+{
+  "mcpServers": {
+    "cloak-scrapling": {
+      "command": "uvx",
+      "args": ["cloak-scrapling-mcp"]
+    }
+  }
+}
+```
+
+If the main package is already installed, the console script also works:
 
 ```toml
 [mcp_servers.cloak-scrapling]

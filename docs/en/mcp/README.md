@@ -2,7 +2,13 @@
 
 ## Start server
 
-stdio mode:
+Recommended uvx stdio mode:
+
+```powershell
+uvx cloak-scrapling-mcp
+```
+
+If the main `cloak-scrapling` package is already installed, use the console script:
 
 ```powershell
 cloak-scrapling-mcp
@@ -69,6 +75,21 @@ Typical flow:
 Call `open`, then call `state` to get element indexes, then call `click` or `input` for the target element. Indexes are valid only for the latest `state` result.
 
 ## Minimal MCP config
+
+uvx form:
+
+```json
+{
+  "mcpServers": {
+    "cloak-scrapling": {
+      "command": "uvx",
+      "args": ["cloak-scrapling-mcp"]
+    }
+  }
+}
+```
+
+Installed command form:
 
 ```json
 {

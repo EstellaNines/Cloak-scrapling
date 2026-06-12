@@ -2,7 +2,13 @@
 
 ## 启动方式
 
-stdio 模式：
+推荐 uvx stdio 模式：
+
+```powershell
+uvx cloak-scrapling-mcp
+```
+
+如果已经安装 `cloak-scrapling` 主包，也可直接使用 console script：
 
 ```powershell
 cloak-scrapling-mcp
@@ -69,6 +75,21 @@ cloak-scrapling-mcp --http --host 127.0.0.1 --port 8765
 调用 `open` 后，再调用 `state` 获取编号，然后用 `click` 或 `input` 操作对应元素。编号只对最近一次 `state` 有效。
 
 ## 最小 MCP 配置
+
+uvx 方式：
+
+```json
+{
+  "mcpServers": {
+    "cloak-scrapling": {
+      "command": "uvx",
+      "args": ["cloak-scrapling-mcp"]
+    }
+  }
+}
+```
+
+已安装命令方式：
 
 ```json
 {

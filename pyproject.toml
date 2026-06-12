@@ -84,3 +84,6 @@ include-package-data = true
 [tool.setuptools.package-data]
 cloak_scrapling = ["agent_skill/SKILL.md", "py.typed"]
 scrapling = ["py.typed"]
+
+[tool.uv.workspace]
+members = ["packages/cloak-scrapling-mcp"]
