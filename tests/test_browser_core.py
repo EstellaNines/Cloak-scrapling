@@ -15,6 +15,18 @@ from cloak_scrapling.browser_core import (
 )
 
 
+def _expected_cache_suffix() -> str:
+    """Platform-aware tail of the default cache dir.
+
+    On Windows the default lands under ``LOCALAPPDATA`` (``CloakScrapling\\
+    cloakbrowser``); on POSIX it lands under ``~/.cache``. Tests assert the
+    tail rather than an absolute path so they hold on either OS.
+    """
+    if os.name == "nt":
+        return os.path.join("CloakScrapling", "cloakbrowser")
+    return os.path.join(".cache", "cloak-scrapling", "cloakbrowser")
+
+
 class BrowserCoreResolverTests(unittest.TestCase):
     def setUp(self) -> None:
         self.env_patcher = patch.dict(os.environ, {}, clear=True)
@@ -106,7 +118,7 @@ class BrowserCoreResolverTests(unittest.TestCase):
 
         self.assertEqual(path, "/cache/chromium/chrome")
         self.assertEqual(len(calls), 1)
-        self.assertTrue(calls[0].endswith(".cache/cloak-scrapling/cloakbrowser"))
+        self.assertTrue(calls[0].endswith(_expected_cache_suffix()))
 
     def test_clear_cache_sets_cloakbrowser_cache_dir_before_clearing(self) -> None:
         fake_package = types.ModuleType("cloakbrowser")
@@ -126,7 +138,7 @@ class BrowserCoreResolverTests(unittest.TestCase):
             clear_browser_core_cache()
 
         self.assertEqual(len(calls), 1)
-        self.assertTrue(calls[0].endswith(".cache/cloak-scrapling/cloakbrowser"))
+        self.assertTrue(calls[0].endswith(_expected_cache_suffix()))
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import json
 import os
 import socket
 import sys
+import tempfile
 import time
 from pathlib import Path
 from urllib.request import urlopen
@@ -15,12 +16,28 @@ DEFAULT_CLOAK_SOURCE = TOOL_ROOT / "CloakBrowser"
 DEFAULT_SCRAPLING_SOURCE = TOOL_ROOT / "scrapling"
 
 
+def _safe_home() -> Path:
+    """Return the user home, falling back to the temp dir if undeterminable.
+
+    On Windows ``Path.home()`` relies on ``USERPROFILE``/``HOMEDRIVE`` and raises
+    ``RuntimeError`` when those are absent (e.g. a stripped environment), unlike
+    POSIX where ``pwd`` provides a fallback.
+    """
+    try:
+        return Path.home()
+    except RuntimeError:
+        return Path(tempfile.gettempdir())
+
+
 def default_cache_dir() -> Path:
     if os.environ.get("CLOAK_SCRAPLING_CACHE_DIR"):
         return Path(os.environ["CLOAK_SCRAPLING_CACHE_DIR"])
-    if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
-        return Path(os.environ["LOCALAPPDATA"]) / "CloakScrapling" / "cloakbrowser"
-    return Path.home() / ".cache" / "cloak-scrapling" / "cloakbrowser"
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA")
+        if base:
+            return Path(base) / "CloakScrapling" / "cloakbrowser"
+        return _safe_home() / "AppData" / "Local" / "CloakScrapling" / "cloakbrowser"
+    return _safe_home() / ".cache" / "cloak-scrapling" / "cloakbrowser"
 
 
 def local_sources_enabled() -> bool:

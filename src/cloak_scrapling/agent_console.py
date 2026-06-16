@@ -22,12 +22,31 @@ def env_console_hold_enabled() -> bool:
     return os.environ.get("CLOAK_SCRAPLING_CONSOLE_HOLD", "").strip().lower() in TRUTHY
 
 
+def _safe_home() -> Path:
+    """Return the user home, falling back to the temp dir if undeterminable.
+
+    On Windows ``Path.home()`` relies on ``USERPROFILE``/``HOMEDRIVE`` and raises
+    ``RuntimeError`` when those are absent (e.g. a stripped environment), unlike
+    POSIX where ``pwd`` provides a fallback. Guard against that so log-path
+    resolution never crashes.
+    """
+    import tempfile
+
+    try:
+        return Path.home()
+    except RuntimeError:
+        return Path(tempfile.gettempdir())
+
+
 def default_log_dir() -> Path:
     if os.environ.get("CLOAK_SCRAPLING_LOG_DIR"):
         return Path(os.environ["CLOAK_SCRAPLING_LOG_DIR"])
-    if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
-        return Path(os.environ["LOCALAPPDATA"]) / "CloakScrapling" / "logs"
-    return Path.home() / ".cache" / "cloak-scrapling" / "logs"
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA")
+        if base:
+            return Path(base) / "CloakScrapling" / "logs"
+        return _safe_home() / "AppData" / "Local" / "CloakScrapling" / "logs"
+    return _safe_home() / ".cache" / "cloak-scrapling" / "logs"
 
 
 def _json_safe(value: Any) -> Any:

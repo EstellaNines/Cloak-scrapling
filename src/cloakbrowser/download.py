@@ -10,6 +10,7 @@ import hashlib
 import logging
 import os
 import platform
+import ssl
 import stat
 import subprocess
 import sys
@@ -49,6 +50,45 @@ DOWNLOAD_TIMEOUT = httpx.Timeout(connect=10.0, read=60.0, write=10.0, pool=10.0)
 
 # Auto-update check interval (1 hour)
 UPDATE_CHECK_INTERVAL = 3600
+
+
+# ---------------------------------------------------------------------------
+# TLS verification context.
+#
+# On systems where a local proxy or security tool (e.g. SteamTools, corporate
+# MITM gateways, AV TLS inspection) re-signs HTTPS traffic with a private root
+# CA, that root lives in the OS trust store but NOT in certifi's bundle, so
+# httpx's default verification fails with CERTIFICATE_VERIFY_FAILED.
+#
+# `truststore` makes Python defer to the OS-native trust store (Windows
+# CryptoAPI / macOS SecureTransport / Linux system CAs), which already contains
+# those locally-installed roots. We prefer it when available and fall back to
+# httpx's certifi-based default otherwise.
+#
+# Override with CLOAKBROWSER_SSL_NO_VERIFY=true to disable verification entirely
+# (last resort for broken trust stores; not recommended).
+# ---------------------------------------------------------------------------
+def _build_ssl_context() -> "ssl.SSLContext | bool":
+    """Return an SSL context (or bool) suitable for httpx's `verify` argument."""
+    if os.environ.get("CLOAKBROWSER_SSL_NO_VERIFY", "").lower() == "true":
+        logger.warning("TLS verification disabled via CLOAKBROWSER_SSL_NO_VERIFY")
+        return False
+    try:
+        import truststore
+
+        ctx = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        logger.debug("Using OS-native trust store (truststore) for TLS verification")
+        return ctx
+    except Exception:
+        logger.debug("truststore unavailable; falling back to certifi", exc_info=True)
+        return True
+
+
+def _http_client(**kwargs) -> httpx.Client:
+    """Build an httpx.Client that trusts the OS-native certificate store."""
+    kwargs.setdefault("verify", _build_ssl_context())
+    kwargs.setdefault("follow_redirects", True)
+    return httpx.Client(**kwargs)
 
 
 def _show_welcome() -> None:
@@ -202,9 +242,10 @@ def _fetch_checksums(version: str | None = None) -> dict[str, str] | None:
 
     for url in urls:
         try:
-            resp = httpx.get(url, follow_redirects=True, timeout=10.0)
-            resp.raise_for_status()
-            return _parse_checksums(resp.text)
+            with _http_client(timeout=10.0) as client:
+                resp = client.get(url)
+                resp.raise_for_status()
+                return _parse_checksums(resp.text)
         except Exception:
             continue
     return None
@@ -247,7 +288,9 @@ def _download_file(url: str, dest: Path) -> None:
     """Download a file with progress logging."""
     logger.info("Downloading from %s", url)
 
-    with httpx.stream("GET", url, follow_redirects=True, timeout=DOWNLOAD_TIMEOUT) as response:
+    with _http_client(timeout=DOWNLOAD_TIMEOUT) as client, client.stream(
+        "GET", url
+    ) as response:
         response.raise_for_status()
 
         total = int(response.headers.get("content-length", 0))
@@ -470,18 +513,17 @@ def _get_latest_chromium_version() -> str | None:
     so Linux-only releases won't be offered to macOS users.
     """
     try:
-        resp = httpx.get(
-            GITHUB_API_URL, params={"per_page": 10}, timeout=10.0
-        )
-        resp.raise_for_status()
-        platform_tarball = get_archive_name()
-        for release in resp.json():
-            tag = release.get("tag_name", "")
-            if tag.startswith("chromium-v") and not release.get("draft"):
-                asset_names = {a["name"] for a in release.get("assets", [])}
-                if platform_tarball in asset_names:
-                    return tag.removeprefix("chromium-v")
-        return None
+        with _http_client(timeout=10.0) as client:
+            resp = client.get(GITHUB_API_URL, params={"per_page": 10})
+            resp.raise_for_status()
+            platform_tarball = get_archive_name()
+            for release in resp.json():
+                tag = release.get("tag_name", "")
+                if tag.startswith("chromium-v") and not release.get("draft"):
+                    asset_names = {a["name"] for a in release.get("assets", [])}
+                    if platform_tarball in asset_names:
+                        return tag.removeprefix("chromium-v")
+            return None
     except Exception:
         logger.debug("Auto-update check failed", exc_info=True)
         return None
@@ -512,19 +554,17 @@ def _check_wrapper_update() -> None:
     if os.environ.get("CLOAKBROWSER_DOWNLOAD_URL"):
         return
     try:
-        resp = httpx.get(
-            "https://pypi.org/pypi/cloakbrowser/json",
-            timeout=5.0,
-        )
-        resp.raise_for_status()
-        latest = resp.json()["info"]["version"]
-        if _version_newer(latest, _wrapper_version):
-            logger.warning(
-                "Update available: cloakbrowser %s → %s. "
-                "Run: pip install --upgrade cloakbrowser",
-                _wrapper_version,
-                latest,
-            )
+        with _http_client(timeout=5.0) as client:
+            resp = client.get("https://pypi.org/pypi/cloakbrowser/json")
+            resp.raise_for_status()
+            latest = resp.json()["info"]["version"]
+            if _version_newer(latest, _wrapper_version):
+                logger.warning(
+                    "Update available: cloakbrowser %s → %s. "
+                    "Run: pip install --upgrade cloakbrowser",
+                    _wrapper_version,
+                    latest,
+                )
     except Exception:
         logger.debug("Wrapper update check failed", exc_info=True)
 

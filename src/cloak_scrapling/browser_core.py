@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import platform
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -156,14 +157,31 @@ def default_vendor_root() -> Path:
     return candidates[0]
 
 
+def _safe_home() -> Path:
+    """Return the user home, falling back to the temp dir if undeterminable.
+
+    On Windows ``Path.home()`` relies on ``USERPROFILE``/``HOMEDRIVE`` and raises
+    ``RuntimeError`` when those are absent (e.g. a stripped environment), unlike
+    POSIX where ``pwd`` provides a fallback. Guard against that so cache-path
+    resolution never crashes.
+    """
+    try:
+        return Path.home()
+    except RuntimeError:
+        return Path(tempfile.gettempdir())
+
+
 def default_cache_root() -> Path:
     if os.environ.get("CLOAKBROWSER_CACHE_DIR"):
         return Path(os.environ["CLOAKBROWSER_CACHE_DIR"])
     if os.environ.get("CLOAK_SCRAPLING_CACHE_DIR"):
         return Path(os.environ["CLOAK_SCRAPLING_CACHE_DIR"])
-    if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
-        return Path(os.environ["LOCALAPPDATA"]) / "CloakScrapling" / "cloakbrowser"
-    return Path.home() / ".cache" / "cloak-scrapling" / "cloakbrowser"
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA")
+        if base:
+            return Path(base) / "CloakScrapling" / "cloakbrowser"
+        return _safe_home() / "AppData" / "Local" / "CloakScrapling" / "cloakbrowser"
+    return _safe_home() / ".cache" / "cloak-scrapling" / "cloakbrowser"
 
 
 def current_platform_tag() -> str:
